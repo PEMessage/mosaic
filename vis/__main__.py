@@ -2,6 +2,7 @@ import json
 import jinja2
 import sys
 import pygments
+import pygments.formatters
 import pygments.lexers
 from pathlib import Path
 
@@ -25,7 +26,7 @@ if __name__ == '__main__':
 
     hl = pygments.highlight(src.replace('    ', '  '),
             lexer=pygments.lexers.guess_lexer_for_filename('src.py', src),
-            formatter=pygments.formatters.html.HtmlFormatter(
+            formatter=pygments.formatters.HtmlFormatter(
                 style='xcode',
                 linenos='inline',
                 linespans=True
