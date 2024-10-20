@@ -327,20 +327,27 @@ class OperatingSystem:
     def state_dump(self) -> dict:
         """Create a serializable Mosaic state dump with hash code."""
         heaps = {}
+
+        # Note:
+        #   heaps: A heap_id map from |object address| to |human readable index(start from 1)|
         for th in self._threads:
             if (i := id(th.heap)) not in heaps:  # unique heaps
                 heaps[i] = len(heaps) + 1
 
+        # Note:  dump all threads
+        #       Thread contain 1.context(the generator) 2.heap(the dict)
         os_state = {
             'current': self._current,
             'choices': sorted(list(self._choices.keys())),
             'contexts': [
+                # Note: Dictionary Comprehension 字典推导式
                 {
                     'name': th.context.gi_frame.f_code.co_name,
                     'heap': heaps[id(th.heap)],  # the unique heap id
                     'pc': th.context.gi_frame.f_lineno,
                     'locals': th.context.gi_frame.f_locals,
                 } if th.context.gi_frame is not None else None
+                    # th is for variable from here
                     for th in self._threads
             ],
             'heaps': {
@@ -353,6 +360,7 @@ class OperatingSystem:
         }
 
         h = hash(json.dumps(os_state, sort_keys=True)) + 2**63
+        # Note: DICT1 | DICT2 --> merge the dict ( not support & )
         return (copy.deepcopy(os_state)  # freeze the runtime state
                 | dict(hashcode=f'{h:016x}'))
 
@@ -419,7 +427,10 @@ class Mosaic:
                 self.state |= dict(depth=0)
                 self.hashcode = self.state['hashcode']
 
+            
             def extend(self, c):
+                # Note: Re-crate a OS, and replay all history syscall
+                # ? It's possible to make OS or State Cloneable
                 st = State(self.trace + (c,))
                 st.state = st.state | dict(depth=self.state['depth'] + 1)
                 return st
@@ -430,6 +441,8 @@ class Mosaic:
         while queued:
             st = queued.pop(0)
             for choice in st.state['choices']:
+                # Note: For every choice, clone current OS,
+                #       and apply differnt choice on it
                 st1 = st.extend(choice)
                 if st1.hashcode not in V:  # found an unexplored state
                     V[st1.hashcode] = st1.state
@@ -473,6 +486,7 @@ class Mosaic:
 ## 4. Utilities
 
 if __name__ == '__main__':
+    from viztracer import VizTracer
     parser = argparse.ArgumentParser(
         description='The modeled operating system and state explorer.'
     )
@@ -484,6 +498,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--check', action='store_true')
     args = parser.parse_args()
 
+    # with VizTracer(log_func_args=True ,log_func_retval=True, log_print=True):
     src = Path(args.source).read_text()
     mosaic = Mosaic(src)
     if args.check:
