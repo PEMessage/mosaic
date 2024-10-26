@@ -6,6 +6,7 @@ else
     file="$1"
 fi
 
-python3 mosaic.py -c "$file" | python3 -m vis > output.html
+rm -rf  output.json
+python3 mosaic.py -c "$file" | tee output.json |  python3 -m vis > output.html
 echo "http://localhost:9078/output.html"
 python3 -m http.server 9078
