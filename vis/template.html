@@ -342,14 +342,21 @@ function visualize(divname, MODEL) {
     function createSubTree(parentdata) {
         var model = diagram.model;
         var parent = diagram.findNodeForData(parentdata);
+
         var children = [];
+        var created_children_num = 0;
 
         for (let i in MODEL.edges) {
             var st = MODEL.edges[i][0];
             var ed = MODEL.edges[i][1];
             var label = MODEL.edges[i][2];
             if (st == parentdata.key) {
-                children.push({ key: st, ed: ed, label: label });
+                if ( MODEL.edges[i].created ) {
+                    created_children_num += 1
+                } else {
+                    children.push({ key: st, ed: ed, label: label });
+                    MODEL.edges[i].created = true
+                }
             }
         }
 
@@ -374,7 +381,7 @@ function visualize(divname, MODEL) {
             child.location = parent.location;
         }
 
-        return children.length
+        return children.length + created_children_num
     }
 
     const defaultNode = $$(go.Node, "Auto",
@@ -553,6 +560,14 @@ function visualize(divname, MODEL) {
                     var label = MODEL.edges[i][2];
                     if (st == prev && ed == current) {
                         var linkdata = { from: st, to: ed, label: label };
+                        if ( MODEL.edges[i].created ) {
+                            var created = true
+                        } else {
+                            var created = false
+                            // now create it
+                            MODEL.edges[i].created = true
+                        }
+                        break
                     }
                 }
 
@@ -561,8 +576,10 @@ function visualize(divname, MODEL) {
                     parent: prev
                 };
                 addNode(diagram.model, node);
-                parseLink(linkdata);
-                diagram.model.addLinkData(linkdata);
+                if ( ! created ) {
+                    parseLink(linkdata);
+                    diagram.model.addLinkData(linkdata);
+                }
 
 
                 // position the new child node close to the parent
