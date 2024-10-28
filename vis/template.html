@@ -545,6 +545,10 @@ function visualize(divname, MODEL) {
     function expandNodeByHashcode(hashcode) {
         // alert('Node with hashcode ' + hashcode + ' not found.');
         let allpaths = findAllPaths(V, init_state.hashcode, hashcode)
+        if ( allpaths.length == 0 ) {
+            alert("hashcode not founded")
+            return
+        }
         for ( paths of allpaths ) {
             prev = paths[0]
             for ( current of paths ) {
