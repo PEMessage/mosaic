@@ -546,17 +546,32 @@ function visualize(divname, MODEL) {
                     continue
                 }
                 // Loop control  1.1 : assert : 1 < current <= paths.length
+                diagram.startTransaction("CollapseExpandTree");
+                for (let i in MODEL.edges) {
+                    var st = MODEL.edges[i][0];
+                    var ed = MODEL.edges[i][1];
+                    var label = MODEL.edges[i][2];
+                    if (st == prev && ed == current) {
+                        var linkdata = { from: st, to: ed, label: label };
+                    }
+                }
 
                 var node = {
                     key: current,
                     parent: prev
                 };
                 addNode(diagram.model, node);
+                parseLink(linkdata);
+                diagram.model.addLinkData(linkdata);
+
 
                 // position the new child node close to the parent
                 let current_node = diagram.findNodeForKey(current);
                 let prev_node = diagram.findNodeForKey(prev);
+                // diagram.model.setDataProperty(prev_node.data, "everExpanded", true);
+                diagram.commandHandler.expandTree(prev_node);
                 current_node.location = prev_node.location;
+                diagram.commitTransaction("CollapseExpandTree");
 
 
                 // Flow control 2. remember prev
