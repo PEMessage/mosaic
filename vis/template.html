@@ -537,7 +537,33 @@ function visualize(divname, MODEL) {
 
     function expandNodeByHashcode(hashcode) {
         // alert('Node with hashcode ' + hashcode + ' not found.');
-        console.log(JSON.stringify(findAllPaths(V, init_state.hashcode, hashcode)))
+        let allpaths = findAllPaths(V, init_state.hashcode, hashcode)
+        for ( paths of allpaths ) {
+            prev = paths[0]
+            for ( current of paths ) {
+                // Flow control 1. skip first
+                if ( prev == current ) {
+                    continue
+                }
+                // Loop control  1.1 : assert : 1 < current <= paths.length
+
+                var node = {
+                    key: current,
+                    parent: prev
+                };
+                addNode(diagram.model, node);
+
+                // position the new child node close to the parent
+                let current_node = diagram.findNodeForKey(current);
+                let prev_node = diagram.findNodeForKey(prev);
+                current_node.location = prev_node.location;
+
+
+                // Flow control 2. remember prev
+                prev = current
+            }
+        }
+        // console.log(JSON.stringify(findAllPaths(V, init_state.hashcode, hashcode)))
     }
     document.getElementById('expandButton').addEventListener('click', function() {
         const hashcode = document.getElementById('hashcodeInput').value;
