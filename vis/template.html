@@ -130,6 +130,18 @@ function visualize(divname, MODEL) {
         var v = MODEL.vertices[i];
         V[v.hashcode] = v;
         v.created = false;
+
+        // init v.link attribute
+        v.link = { next: [], prev: [] };
+    }
+
+    for ( const e of MODEL.edges) {
+        st = e[0]
+        ed = e[1]
+        label = e[2]
+
+        V[st].link.next.push(ed)
+        V[ed].link.prev.push(st)
     }
 
     var init_state = MODEL.vertices[0];
@@ -302,6 +314,29 @@ function visualize(divname, MODEL) {
         if (v.stdout.length > 0) {
             model.addNodeData({ key: 'scratch', text: v.stdout.trim(), group: key });
         }
+    }
+
+    function findAllPaths(V, start, end, path = [], allPaths = []) {
+        // Add the current node to the path
+        path.push(start);
+
+        // If the current node is the end node, add the path to allPaths
+        if (start === end) {
+            allPaths.push([...path]); // Store a copy of the current path
+        } else {
+            // If there are next nodes, explore them
+            if (V[start].link.next) {
+                for (const neighbor of V[start].link.next) {
+                    if (!path.includes(neighbor)) { // Avoid cycles
+                        findAllPaths(V, neighbor, end, path, allPaths);
+                    }
+                }
+            }
+        }
+
+        // Backtrack: remove the current node from the path
+        path.pop();
+        return allPaths;
     }
 
     function createSubTree(parentdata) {
@@ -501,7 +536,8 @@ function visualize(divname, MODEL) {
 
 
     function expandNodeByHashcode(hashcode) {
-        alert('Node with hashcode ' + hashcode + ' not found.');
+        // alert('Node with hashcode ' + hashcode + ' not found.');
+        console.log(JSON.stringify(findAllPaths(V, init_state.hashcode, hashcode)))
     }
     document.getElementById('expandButton').addEventListener('click', function() {
         const hashcode = document.getElementById('hashcodeInput').value;
